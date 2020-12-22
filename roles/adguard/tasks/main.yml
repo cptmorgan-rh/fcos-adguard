@@ -1,0 +1,59 @@
+---
+- name: Delete adguard vm if redeploy defined
+  command: "govc vm.destroy {{ adguard_vm.name }}" # noqa 301
+  when: redeploy is defined
+
+- name: Create Temp Build Directory for adguard
+  tempfile:
+    state: directory
+    suffix: adguard
+  register: adguard_tempdir
+
+- name: "Create adguard.fcc in {{ adguard_tempdir.path }}"
+  template:
+    src: adguard.fcc.j2
+    dest: "{{ adguard_tempdir.path }}/adguard.fcc"
+    mode: 0664
+
+- name: Create adguard transpiled ignition file
+  shell: "{{ playbook_dir }}/bin/fcct -d {{ adguard_tempdir.path }} --pretty --strict < {{ adguard_tempdir.path }}/adguard.fcc > {{ adguard_tempdir.path }}/transpiled_config.ign" # noqa 301
+
+- name: Set adguard_ign Fact
+  set_fact:
+    adguard_ign: "{{ lookup('file', '{{ adguard_tempdir.path }}/transpiled_config.ign') | b64encode }}" # noqa 207
+
+- name: Create adguard VMs from the template
+  vmware_guest:
+    hostname: "{{ vcenter.ip }}"
+    username: "{{ vcenter.admin_username }}"
+    password: "{{ vcenter.admin_password }}"
+    datacenter: "{{ vcenter.datacenter }}"
+    validate_certs: no
+    folder: "{{ vcenter.folder_absolute_path }}"
+    name: "{{ adguard_vm.name }}"
+    state: "{{ vcenter.vm_power_state }}"
+    template: "FCOS-{{ template_name }}"
+    disk:
+    - size_gb: "{{ adguard_vm.disk_gb }}"
+      type: thin
+      datastore: "{{ vcenter.datastore }}"
+    hardware:
+      memory_mb: "{{ adguard_vm.memory_mb }}"
+      num_cpus: "{{ adguard_vm.num_cpus }}"
+      memory_reservation_lock: True
+    networks:
+    - name: "{{ vcenter.network }}"
+    wait_for_ip_address: no
+    customvalues:
+     - key: guestinfo.ignition.config.data
+       value: "{{ adguard_ign }}"
+     - key: guestinfo.ignition.config.data.encoding
+       value: base64
+     - key: guestinfo.afterburn.initrd.network-kargs
+       value: "ip={{ adguard_vm.ipaddr }}::{{ adguard_vm.gateway }}:{{ adguard_vm.netmask }}:{{ adguard_vm.name }}:ens192:off:{{ adguard_vm.dns }}" # noqa 204
+
+- name: Remove {{ adguard_tempdir.path }} and contents
+  file:
+    path: "{{ adguard_tempdir.path }}"
+    state: absent
+  when: adguard_tempdir.path is defined

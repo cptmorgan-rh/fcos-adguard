@@ -1,0 +1,35 @@
+variant: fcos
+version: 1.1.0
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - {{ config.installer_ssh_key }}
+storage:
+  directories:
+  - path: /opt/adguard/workdir
+    mode: 0644
+  - path: /opt/adguard/confdir
+    mode: 0644
+systemd:
+  units:
+    - name: adguard.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=adguard
+        After=network-online.target
+        Wants=network-online.target
+        [Service]
+        TimeoutStartSec=0
+        ExecStartPre=-/bin/podman kill adguard
+        ExecStartPre=-/bin/podman rm adguard
+        ExecStartPre=/bin/podman pull docker.io/adguard/adguardhome
+        ExecStart=/bin/podman run --name adguard \
+        --net=host \
+        --privileged \
+        -v /opt/adguard/workdir:/opt/adguardhome/work/:Z \
+        -v /opt/adguard/confdir:/opt/adguardhome/conf/:Z \
+        docker.io/adguard/adguardhome
+        [Install]
+        WantedBy=multi-user.target
