@@ -10,15 +10,14 @@ The goal of this repository is to provide a simple, reproducible way to deploy A
 
 Start by editing the `group_vars/all.yml` file:
 
-+ Set the vnter variables
++ Set the vCenter variables
     1. IP/Host Name of vCenter
     2. vCenter Network
     3. Datastore name
     4. Datacenter name
     5. username and passwords of vCenter Account
     6. Absoluate folder path - e.g /DataCenter/vm/Folder/
-    7. Template Name
-    8. VM Power state after being deployed
+    7. VM Power state after being deployed
 
 + Configure your Fedora CoreOS URL and govc version.
     1. To get the URL for VMware ova of the latest stable release of visit this link: [Download Fedora CoreOS](https://getfedora.org/en/coreos/download?tab=metal_virtualized&stream=stable)

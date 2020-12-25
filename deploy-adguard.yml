@@ -24,6 +24,6 @@
         name: deploy_ova
       when: skip_ova is not defined
 
-    - name: Run the adguard role to deploy the CoreDNS server
+    - name: Run the adguard role to deploy the AdGuard server
       import_role:
         name: adguard

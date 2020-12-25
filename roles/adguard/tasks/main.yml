@@ -52,7 +52,7 @@
      - key: guestinfo.afterburn.initrd.network-kargs
        value: "ip={{ adguard_vm.ipaddr }}::{{ adguard_vm.gateway }}:{{ adguard_vm.netmask }}:{{ adguard_vm.name }}:ens192:off:{{ adguard_vm.dns }}" # noqa 204
 
-- name: Remove {{ adguard_tempdir.path }} and contents
+- name: "Remove {{ adguard_tempdir.path }} and contents"
   file:
     path: "{{ adguard_tempdir.path }}"
     state: absent
