@@ -13,8 +13,26 @@ storage:
     mode: 0644
 systemd:
   units:
-    - name: adguard.service
+    - name: install-open-vm-tools.service
       enabled: true
+      contents: |
+        [Unit]
+        Description=Installs open-vm-tools
+        After=network-online.target
+        Wants=network-online.target
+
+        [Service]
+        Type=oneshot
+        TimeoutStartSec=0
+        ExecStart=/bin/bash -c "/bin/rpm-ostree install open-vm-tools"
+        ExecStartPost=/usr/bin/systemctl enable adguard.service
+        ExecStartPost=/bin/bash -c "/usr/bin/systemctl disable install-open-vm-tools.service && reboot"
+
+        [Install]
+        WantedBy=multi-user.target
+
+    - name: adguard.service
+      enabled: false
       contents: |
         [Unit]
         Description=adguard
